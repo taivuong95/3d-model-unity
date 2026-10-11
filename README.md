@@ -48,6 +48,51 @@ Game Unity 3D góc nhìn isometric: nhân vật chính **Iron Resolve** (cel-sha
 Chỉnh nét vẽ cel-shading: mở material `Assets/Enemy/IronResolve/IronResolveToon.mat` (Outline Width, Shadow Color, Edge Softness...).
 Chỉnh camera: component **Isometric Camera** trên `Main Camera` (Yaw, Pitch, Ortho Size).
 
+## Kết nối MCP Unity (để Claude/AI điều khiển Unity)
+
+Project dùng [MCP Unity](https://github.com/CoderGamester/mcp-unity) (package `com.gamelovers.mcp-unity`, đã khai báo sẵn trong `Packages/manifest.json`), cho phép Claude Code / Claude Desktop thao tác trực tiếp Unity Editor (tạo object, sửa component, chạy Play, đọc console...).
+
+**Yêu cầu:** Unity 6 trở lên, [Node.js](https://nodejs.org) 18+ (`node --version` để kiểm tra; macOS: `brew install node@18`).
+
+1. Mở project trong Unity, đợi package được tải về (Window → Package Manager sẽ thấy *MCP Unity*). Nếu chưa có: Package Manager → **+** → *Add package from git URL* → `https://github.com/CoderGamester/mcp-unity.git`.
+2. Mở **Tools → MCP Unity → Server Window**.
+3. Nếu thư mục `Server~` chưa build, bấm **Force Install Server** (hoặc chạy `npm install && npm run build` trong `Library/PackageCache/com.gamelovers.mcp-unity@.../Server~`).
+4. Bấm **Start Server** (WebSocket mặc định cổng `8090`).
+5. Cấu hình client AI, cách dễ nhất là bấm nút **Configure** của client tương ứng trong Server Window. Hoặc làm thủ công:
+
+   **Claude Code** – tạo file `.mcp.json` ở thư mục gốc project:
+   ```json
+   {
+     "mcpServers": {
+       "mcp-unity": {
+         "command": "node",
+         "args": ["Library/PackageCache/com.gamelovers.mcp-unity@<hash>/Server~/build/index.js"]
+       }
+     }
+   }
+   ```
+
+   **Claude Desktop** – thêm vào `claude_desktop_config.json` (đường dẫn tuyệt đối, đổi cho đúng máy bạn):
+   ```json
+   {
+     "mcpServers": {
+       "mcp-unity": {
+         "command": "node",
+         "args": ["/ĐƯỜNG/DẪN/TỚI/My project/Library/PackageCache/com.gamelovers.mcp-unity@<hash>/Server~/build/index.js"]
+       }
+     }
+   }
+   ```
+   (`<hash>` thay đổi theo phiên bản package; Server Window hiển thị đường dẫn chính xác để copy.) Sau khi sửa config, khởi động lại Claude Desktop.
+6. Mở client AI. Khi kết nối thành công, Server Window hiện client trong khung màu xanh.
+
+**Lưu ý:**
+- Luôn bấm **Start Server** trong Unity trước khi dùng AI.
+- Unity chỉ xử lý lệnh khi cửa sổ Unity đang được focus; nếu Play mode bị đứng, bấm vào cửa sổ Unity (hoặc gọi lệnh *play* lần nữa để bỏ pause).
+- Token xác thực nằm ở `Library/McpUnity/bridge-token` (không commit). Nếu đổi token, khởi động lại client AI.
+- Không kết nối được: kiểm tra server đang chạy, Node.js có trong PATH, thử đổi cổng trong Server Window (lưu ở `ProjectSettings/McpUnitySettings.json`).
+- Lỗi *Connection failed* khi chạy test ở Play mode: tắt **Reload Domain** tại Edit → Project Settings → Editor → Enter Play Mode Settings.
+
 ## Cấu trúc thư mục
 
 ```
